@@ -1,0 +1,12 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+*.tsv
+*.pdf
+*.rds
+*.xlsx
+*.csv
+Delete/
+Sample/
