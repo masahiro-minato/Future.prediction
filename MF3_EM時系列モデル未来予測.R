@@ -8,13 +8,17 @@ MF3_machine <- read_tsv("./tsv_data/Metis_MIF_2211.tsv")          # 機器デー
 MF3_maintenance %>% distinct(Phenomenon) %>% dput()
 # 周辺機名称
 MF3_maintenance$Peripheral_name
-# 現象項目の中で上位10項目を抽出
-Phe10.MF3 <- 
-  head(levels(fct_infreq(MF3_maintenance$Phenomenon)), n=10)
-Phe10.MF3[6]
+# 列名
 names(MF3_maintenance)
+# 現象項目の中で上位15項目を抽出
+Phe10.MF3 <- 
+  head(levels(fct_infreq(MF3_maintenance$Phenomenon)), n=15)
+Phe10.MF3
+index <- 6
+Phe10.MF3[index]
+
 # 保守データから日付ごとのEM件数を取得
-Phenom.MF3 <- Phe10.MF3[6]
+Phenom.MF3 <- Phe10.MF3[index]
 EM.count.MF3 <- 
   MF3_maintenance %>% 
   dplyr::filter(is.na(Peripheral_name)) %>%
@@ -58,9 +62,10 @@ length(MF3.MIF_by.date$X.date)
 MF3.MIF_by.date$X.date[1066]
 
 # データの準備
-end_day = 1430
-start_day = 1066
+start_day = which(MF3.MIF_by.date$X.date == "2019-02-01 JST") 
+end_day = which(MF3.MIF_by.date$X.date == "2022-11-30 JST")   #1430
 pred_term = 30 # 予測期間
+
 # データ
 data_list <- list(
   y = MF3.MIF_by.date$EM.count[start_day:end_day],
@@ -71,27 +76,54 @@ data_list <- list(
   pred_term = pred_term,
   Num_gain = 200/max(MF3.MIF_by.date$MIF.cumsum[start_day:end_day])
 )
-# サンプリング開始日/終了日
+# サンプリング開始日/終了日の確認
 MF3.MIF_by.date$X.date[start_day]
 MF3.MIF_by.date$X.date[end_day]
 
 # コンパイル
 mod <- cmdstan_model("./stan/bsts-AR-tvc-rd-poisson-remod_predict.stan", cpp_options = list(stan_threads = TRUE))
+# マルチコア対応
+options(mc.cores = parallel::detectCores())
+# path
+output_dir = str_c("./csv/",Phenom.MF3)
+output_basename = str_c(Phenom.MF3,".",format(Sys.time(), "%H-%M-%S"))
+object.path = str_c("./Cmdstan_files/Metis-MF3.EM.predict.fit.",Phenom.MF3,"-",start_day,"~",end_day,".rds")
+# csv保存ディレクトリーの作成
+if(!dir.exists(output_dir)){
+  dir.create(output_dir)}
 # MCMCサンプリング
-fit <- mod$sample(data = data_list,
-                  seed = 1234,
-                  chains = 6,
-                  parallel_chains = getOption("mc.cores", 24),
-                  threads_per_chain = 2,
-                  iter_warmup = 60000,
-                  iter_sampling = 20000,
-                  thin = 20,
-                  # adapt_delta = 0.90,
-                  max_treedepth = 15,
-                  refresh = 500)
-
+exTime <- system.time(
+  fit <- mod$sample(data = data_list,
+                    seed = 1234,
+                    chains = 6,
+                    parallel_chains = getOption("mc.cores", 24),
+                    threads_per_chain = 2,
+                    iter_warmup = 60000,
+                    iter_sampling = 20000,
+                    thin = 40,
+                    # adapt_delta = 0.90,
+                    max_treedepth = 15,
+                    refresh = 500,
+                    output_dir = output_dir,
+                    output_basename = output_basename,
+                    show_messages = FALSE)
+)
+# 実行時間
+exTimeTable <- data.frame(user.self = exTime["user.self"], 
+                          sys.self = exTime["sys.self"],
+                          elapsed = exTime["elapsed"], 
+                          row.names = "time")
+exTimeTable
+# 結果保存
+fit$save_object(file = object.path)
+# 読込
+fit <- read_rds(object.path)
+# パラメータ表示
 fit$print(c("s_w", "s_s", "s_r", "s_t", "b_ar", "b_ope[1]", "Intercept", "lp__"))
+# rhatヒストグラム
 fit %>% bayesplot::rhat() %>% hist
+# b_ar 自己回帰係数
+b_ar.mean <- round(mean((fit$draws("b_ar") %>% as_draws_df)$b_ar),3)
 
 # 推定結果の図示 -----------------------------------------------------------------
 # フォント設定
@@ -120,15 +152,29 @@ date_plot.MF3.MIF_by.date.2 <-
 date_plot.MF3.MIF_by.date <- 
   bind_rows(date_plot.MF3.MIF_by.date.1,date_plot.MF3.MIF_by.date.2)
 
+# グラフの表示期間の設定
+limits = c(as.POSIXct("2022-04-01 JST"), as.POSIXct(MF3.MIF_by.date$X.date[end_day+pred_term]))
+# ｙ軸目盛設定
+breaks=seq(0,50,5)
+
 # すべての成分を含んだ状態推定値の図示
 p_lambda_pois <- plotSSM.CmdStanr(fit = fit, 
                                   time_vec = date_plot,
                                   obs_vec = date_plot.MF3.MIF_by.date$EM.count,
                                   state_name = "lambda_exp", 
-                                  graph_title = str_c("EM:",Phenom.MF3," λ(μ + γ + tvc + r)：すべての成分を含んだ状態推定値"), 
+                                  graph_title = str_c("EM：",Phenom.MF3," λ(μ + γ + tvf + r)：すべての成分を含んだ状態推定値（自己回帰係数 b_ar=",b_ar.mean,"）"), 
                                   y_label = "件数",
                                   date_labels = "%Y/%m",
-                                  date_breaks = "2 month") 
+                                  date_breaks = "2 month") +
+  geom_vline(xintercept = as.POSIXct(MF3.MIF_by.date$X.date[end_day]), linetype = 2, color = "darkblue") +
+  # 表示期間の設定
+  scale_x_datetime(limits = limits, date_breaks = "1 month", date_labels = "%Y/%m") +
+  scale_y_continuous(breaks=breaks) +
+  annotate("text", x=as.POSIXct(MF3.MIF_by.date$X.date[end_day]), y=Inf, 
+           hjust=-0.01, # 文字のｘ方向位置調整 マイナスで右へ移動
+           vjust=2, 　　# 文字のｙ方向位置調整 プラスで下へ移動
+           label="⇒ 【未来予測区間】", 
+           size=5, colour="darkblue")
 # 水準成分＋周期成分
 p_mu_gamma_pois <- plotSSM.CmdStanr(fit = fit, 
                                     time_vec = date_plot,
@@ -137,7 +183,11 @@ p_mu_gamma_pois <- plotSSM.CmdStanr(fit = fit,
                                     graph_title = "μ + γ：水準成分＋周期成分", 
                                     y_label = "件数",
                                     date_labels = "%Y/%m",
-                                    date_breaks = "2 month") 
+                                    date_breaks = "2 month") +
+  geom_vline(xintercept = as.POSIXct(MF3.MIF_by.date$X.date[end_day]), linetype = 2, color = "darkblue") +
+  # 表示期間の設定
+  scale_x_datetime(limits = limits, date_breaks = "1 month", date_labels = "%Y/%m")
+  
 # 水準成分＋ランダム成分
 p_mu_r_pois <- plotSSM.CmdStanr(fit = fit, 
                                 time_vec = date_plot,
@@ -146,25 +196,41 @@ p_mu_r_pois <- plotSSM.CmdStanr(fit = fit,
                                 graph_title = "μ + r：水準成分＋ランダム成分", 
                                 y_label = "件数",
                                 date_labels = "%Y/%m",
-                                date_breaks = "2 month") 
+                                date_breaks = "2 month") +
+  geom_vline(xintercept = as.POSIXct(MF3.MIF_by.date$X.date[end_day]), linetype = 2, color = "darkblue") +
+  # 表示期間の設定
+  scale_x_datetime(limits = limits, date_breaks = "1 month", date_labels = "%Y/%m")
 # 水準成分
 p_mu_pois <- plotSSM.CmdStanr(fit = fit, 
                               time_vec = date_plot,
                               # obs_vec = MF3.MIF_by.date$EM.count[start_day:end_day],
                               state_name = "mu_exp", 
-                              graph_title = "μ：水準成分/自己回帰", 
+                              graph_title = str_c("μ：水準成分（自己回帰係数 b_ar=",b_ar.mean,"）"), 
                               y_label = "件数",
                               date_labels = "%Y/%m",
-                              date_breaks = "2 month") 
-# 事後予測区間
+                              date_breaks = "2 month") +
+  geom_vline(xintercept = as.POSIXct(MF3.MIF_by.date$X.date[end_day]), linetype = 2, color = "darkblue") +
+  # 表示期間の設定
+  scale_x_datetime(limits = limits, date_breaks = "1 month", date_labels = "%Y/%m")
+# 予測区間
 p_pred_pois <- plotSSM.CmdStanr(fit = fit, 
                                 time_vec = date_plot,
                                 obs_vec = date_plot.MF3.MIF_by.date$EM.count,
                                 state_name = "y_pred", 
-                                graph_title = str_c("EM:",Phenom.MF3,"95%予測区間"), 
+                                graph_title = str_c("EM：",Phenom.MF3," 95%予測区間 （自己回帰係数 b_ar=",b_ar.mean,"）"), 
                                 y_label = "件数",
                                 date_labels = "%Y/%m",
-                                date_breaks = "2 month")
+                                date_breaks = "2 month",
+                                fill.ribbon = "lightgreen") +
+  geom_vline(xintercept = as.POSIXct(MF3.MIF_by.date$X.date[end_day]), linetype = 2, color = "darkblue") +
+  # 表示期間の設定
+  scale_x_datetime(limits = limits, date_breaks = "1 month", date_labels = "%Y/%m") +
+  scale_y_continuous(breaks=breaks) +
+  annotate("text", x=as.POSIXct(MF3.MIF_by.date$X.date[end_day]), y=Inf, 
+           hjust=-0.01, # 文字のｘ方向位置調整 マイナスで右へ移動
+           vjust=2, 　　# 文字のｙ方向位置調整 プラスで下へ移動
+           label="⇒ 【未来予測区間】", 
+           size=5, colour="darkblue")
 # ドリフト成分
 p_drift_pois <- plotSSM.CmdStanr(fit = fit, 
                                  time_vec = date_plot[32:(end_day-start_day+1+30)],
@@ -173,7 +239,10 @@ p_drift_pois <- plotSSM.CmdStanr(fit = fit,
                                  graph_title = "δ：ドリフト成分",
                                  y_label = "delta",
                                  date_labels = "%Y/%m",
-                                 date_breaks = "2 month")
+                                 date_breaks = "2 month") +
+                geom_vline(xintercept = as.POSIXct(MF3.MIF_by.date$X.date[end_day]), linetype = 2, color = "darkblue") +
+                # 表示期間の設定
+                scale_x_datetime(limits = limits, date_breaks = "1 month", date_labels = "%Y/%m")
 # 周期成分
 p_cycle_pois <- plotSSM.CmdStanr(fit = fit, 
                                  time_vec = date_plot,
@@ -181,7 +250,10 @@ p_cycle_pois <- plotSSM.CmdStanr(fit = fit,
                                  graph_title = "γ：周期成分", 
                                  y_label = "gamma",
                                  date_labels = "%Y/%m",
-                                 date_breaks = "2 month") 
+                                 date_breaks = "2 month") +
+                geom_vline(xintercept = as.POSIXct(MF3.MIF_by.date$X.date[end_day]), linetype = 2, color = "darkblue") +
+                # 表示期間の設定
+                scale_x_datetime(limits = limits, date_breaks = "1 month", date_labels = "%Y/%m")
 # ランダム成分
 p_random_pois <- plotSSM.CmdStanr(fit = fit, 
                                   time_vec = date_plot,
@@ -189,24 +261,33 @@ p_random_pois <- plotSSM.CmdStanr(fit = fit,
                                   graph_title = "r：ランダム成分", 
                                   y_label = "r",
                                   date_labels = "%Y/%m",
-                                  date_breaks = "2 month")
+                                  date_breaks = "2 month") +
+                  geom_vline(xintercept = as.POSIXct(MF3.MIF_by.date$X.date[end_day]), linetype = 2, color = "darkblue") +
+                  # 表示期間の設定
+                  scale_x_datetime(limits = limits, date_breaks = "1 month", date_labels = "%Y/%m")
 # 水準成分＋時変係数成分
 p_mu_tvc_pois <- plotSSM.CmdStanr(fit = fit, 
                                   time_vec = date_plot,
                                   # obs_vec = MF3.MIF_by.date$EM.count[start_day:end_day],
                                   state_name = "mu_tvc_exp", 
-                                  graph_title = "μ + tvc：水準成分＋時変係数成分", 
+                                  graph_title = "μ + tvf：水準成分＋時変係数成分", 
                                   y_label = "件数",
                                   date_labels = "%Y/%m",
-                                  date_breaks = "2 month") 
+                                  date_breaks = "2 month") +
+                  geom_vline(xintercept = as.POSIXct(MF3.MIF_by.date$X.date[end_day]), linetype = 2, color = "darkblue") +
+                  # 表示期間の設定
+                  scale_x_datetime(limits = limits, date_breaks = "1 month", date_labels = "%Y/%m")
 # 時変係数ｘ稼働台数
 p_tvc_pois <- plotSSM.CmdStanr(fit = fit, 
                                time_vec = date_plot,
                                state_name = "tvc_exp", 
-                               graph_title = "tvc：時変係数ｘ稼働台数", 
+                               graph_title = "tvf：時変係数ｘ稼働台数", 
                                y_label = "件数",
                                date_labels = "%Y/%m",
-                               date_breaks = "2 month")
+                               date_breaks = "2 month") +
+                  geom_vline(xintercept = as.POSIXct(MF3.MIF_by.date$X.date[end_day]), linetype = 2, color = "darkblue") +
+                  # 表示期間の設定
+                  scale_x_datetime(limits = limits, date_breaks = "1 month", date_labels = "%Y/%m")
 # 水準成分+時変係数×1台稼働
 p_mu_tvc_1_pois <- plotSSM.CmdStanr(fit = fit, 
                                     time_vec = date_plot,
@@ -215,7 +296,10 @@ p_mu_tvc_1_pois <- plotSSM.CmdStanr(fit = fit,
                                     graph_title = "μ + tvc：水準成分+時変係数ｘ1台稼働", 
                                     y_label = "件数",
                                     date_labels = "%Y/%m",
-                                    date_breaks = "2 month") 
+                                    date_breaks = "2 month") +
+                    geom_vline(xintercept = as.POSIXct(MF3.MIF_by.date$X.date[end_day]), linetype = 2, color = "darkblue") +
+                    # 表示期間の設定
+                    scale_x_datetime(limits = limits, date_breaks = "1 month", date_labels = "%Y/%m")
 # 時変係数×1台稼働
 p_tvc_1_pois <- plotSSM.CmdStanr(fit = fit, 
                                  time_vec = date_plot,
@@ -224,7 +308,10 @@ p_tvc_1_pois <- plotSSM.CmdStanr(fit = fit,
                                  graph_title = "tvc：時変係数", 
                                  y_label = "tvc",
                                  date_labels = "%Y/%m",
-                                 date_breaks = "2 month")
+                                 date_breaks = "2 month") +
+                  geom_vline(xintercept = as.POSIXct(MF3.MIF_by.date$X.date[end_day]), linetype = 2, color = "darkblue") +
+                  # 表示期間の設定
+                  scale_x_datetime(limits = limits, date_breaks = "1 month", date_labels = "%Y/%m")
 
 
 # グラフ描画
@@ -242,9 +329,9 @@ plot <- plot_grid(p_lambda_pois,
 # now add the title
 title <- ggdraw() + 
   draw_label(
-    str_c("Metis-MF3　　EM現象：", Phenom),
+    str_c("Metis-MF3　　EM現象：", Phenom.MF3),
     fontface = 'bold',
-    color = "blue",
+    color = "darkblue",
     size = 30,
     x = 0,
     hjust = 0
@@ -264,14 +351,29 @@ plot.title <-
     rel_heights = c(0.03, 1)
   )
 
-# グラフ保存
-ggsave(str_c("./PDF/Metis-MF3-EM_AR.tvc.period_poisson.予測区間",Phenom.MF3,".pdf"), 
+# 集合グラフ保存
+ggsave(str_c("./PDF/Metis-MF3-EM_AR.tvc.period_poisson.予測区間",Phenom.MF3,"-",start_day,".pdf"), 
        plot = plot.title, device = cairo_pdf, dpi=300, width=40, height=30)
 
-# グラフ保存
-ggsave(str_c("./PDF/Metis-MF3-EM-",Phenom.MF3,"_1年間+予測区間.pdf"), 
+# 予測区間グラフ保存
+ggsave(str_c("./PDF/Metis-MF3-EM-",Phenom.MF3,".予測区間-",start_day,".pdf"), 
        plot = p_pred_pois, device = cairo_pdf, dpi=300, width=20, height=5)
-
-ggsave(str_c("./PDF/Metis-MF3-EM-",Phenom.MF3,"_1年間+信頼区間.pdf"), 
+# 信頼区間グラフ保存
+ggsave(str_c("./PDF/Metis-MF3-EM-",Phenom.MF3,".信頼区間-",start_day,".pdf"), 
        plot = p_lambda_pois, device = cairo_pdf, dpi=300, width=20, height=5)
+
+# 取得EMデータのグラフ追記(仮値として乱数設定)
+X.date.Feature <- seq(as.POSIXct(MF3.MIF_by.date$X.date[end_day]+3600*24), 
+                      as.POSIXct(MF3.MIF_by.date$X.date[end_day]+3600*24*30), by = "day")
+MIF.date.Feature <- tibble(X.date = X.date.Feature,
+                           EM = floor(runif(pred_term, min=0, max=25)))
+p_pred_pois.Feature <- 
+  p_pred_pois +
+  geom_point(alpha = 0.8, size = 1.5, shape=17, color="red",
+             data = MIF.date.Feature, aes(x = X.date, y = EM))
+# 予測区間+取得データグラフ保存
+ggsave(str_c("./PDF/Metis-MF3-EM-",Phenom.MF3,".予測区間+取得データ-",start_day,".pdf"), 
+       plot = p_pred_pois.Feature, device = cairo_pdf, dpi=300, width=20, height=5)
+
+
 
