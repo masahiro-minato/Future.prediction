@@ -2,7 +2,8 @@
 # library(scales)
 plotSSM.CmdStanr <- function(fit, time_vec, obs_vec = NULL,
                     state_name, graph_title, y_label,
-                    date_labels = "%Y年%m月", date_breaks = "2 month"){
+                    date_labels = "%Y年%m月", date_breaks = "2 month",
+                    fill.ribbon="lightblue", color.obs="red"){
   # 状態空間モデルを図示する関数
   #
   # Args:
@@ -46,8 +47,8 @@ plotSSM.CmdStanr <- function(fit, time_vec, obs_vec = NULL,
                                     hjust = 0.01,#adjust
                                     )) +
     ylab(y_label) +
+    geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.5, fill=fill.ribbon) + 
     geom_line(aes(y = fit), linewidth = 1.2) +
-    geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.5, fill="lightblue") + 
     scale_x_datetime(date_breaks = date_breaks, date_labels = date_labels) +
     theme(axis.title.x = element_text(size = 16),
           axis.title.y = element_text(size = 16),
@@ -57,7 +58,7 @@ plotSSM.CmdStanr <- function(fit, time_vec, obs_vec = NULL,
   
   # 観測値をグラフに追加
   if(!is.null(obs_vec)){
-    p <- p + geom_point(alpha = 0.6, size = 0.9, color="red",
+    p <- p + geom_point(alpha = 0.6, size = 0.9, color=color.obs,
                         data = result_df, aes(x = time, y = obs))
   }
   
