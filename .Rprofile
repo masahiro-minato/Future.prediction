@@ -28,6 +28,7 @@ library(readxl)
 library(cowplot)
 library(ggsci)
 library(gridGraphics)
+library(magrittr)
 
 # マルチコア対応
 options(mc.cores = parallel::detectCores())
