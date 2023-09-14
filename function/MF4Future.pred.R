@@ -430,11 +430,17 @@ MF4Future.pred <- function(# 入力データ/tsv形式
   
   plot(p)
   
+  Num_gain_str <- str_c(Num_gain, collapse=",")
+  
   # 予測区間+取得データグラフ保存
   if(save_graph == TRUE){
     n <- 4
-    ggsave(str_c("./PDF/",title,".EM件数 予測区間-",start_day.MF4,"~",end_day.MF4," c(70,20,10,8).pdf"),
-           plot = p, device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
+    # eval(parse(text = paste0(title,".EM件数_予測区間 <- p")))
+    ggsave(str_c("./PDF/",title,".EM件数_予測区間-",start_day.MF4,"~",end_day.MF4,"_[",Num_gain_str,"].pdf"),
+           plot = p,
+           device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
+    saveRDS(p, file = str_c("./rds/",title,".EM件数_予測区間-",start_day.MF4,"~",end_day.MF4,"_[",Num_gain_str,"].rds"))
+    # eval(parse(text = paste0("save(",title,".EM件数_予測区間,file='./rda/",title,".EM件数_予測区間.rda')")))
   }
   
   # ADF
@@ -480,8 +486,12 @@ MF4Future.pred <- function(# 入力データ/tsv形式
   # 予測区間+取得データグラフ保存
   if(save_graph == TRUE){
     n <- 2
-    ggsave(str_c("./PDF/",title,".ADF_EM件数 予測区間-",start_day.MF4,"~",end_day.MF4," c(70,20,10,8).pdf"),
-           plot = p.ADF, device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
+    # eval(parse(text = paste0(title,".ADF_EM件数_予測区間 <- p.ADF")))
+    ggsave(str_c("./PDF/",title,".ADF_EM件数_予測区間_",start_day.MF4,"~",end_day.MF4,"_[",Num_gain_str,"].pdf"),
+           plot = p.ADF,
+           device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
+    saveRDS(p.ADF, file = str_c("./rds/",title,".ADF_EM件数_予測区間-",start_day.MF4,"~",end_day.MF4,"_[",Num_gain_str,"].rds"))
+    # eval(parse(text = paste0("save(",title,".ADF_EM件数_予測区間,file='./rda/",title,".ADF_EM件数_予測区間.rda')")))
   }
   
   # FIN
@@ -527,8 +537,12 @@ MF4Future.pred <- function(# 入力データ/tsv形式
   # 予測区間+取得データグラフ保存
   if(save_graph == TRUE){
     n <- 2
-    ggsave(str_c("./PDF/",title,".FIN_EM件数 予測区間-",start_day.MF4,"~",end_day.MF4," c(70,20,10,8).pdf"),
-           plot = p.FIN, device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
+    # eval(parse(text = paste0(title,".FIN_EM件数_予測区間 <- p.FIN")))
+    ggsave(str_c("./PDF/",title,".FIN_EM件数_予測区間_",start_day.MF4,"~",end_day.MF4,"_[",Num_gain_str,"].pdf"),
+           plot = p.FIN,
+           device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
+    saveRDS(p.FIN, file = str_c("./rds/",title,".FIN_EM件数_予測区間-",start_day.MF4,"~",end_day.MF4,"_[",Num_gain_str,"].rds"))
+    # eval(parse(text = paste0("save(",title,".FIN_EM件数_予測区間,file='./rda/",title,".FIN_EM件数_予測区間.rda')")))
   }
   print(Sys.time(), quote=F)
   return(fit)
