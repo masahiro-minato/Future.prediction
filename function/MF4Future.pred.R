@@ -13,6 +13,8 @@ MF4Future.pred <- function(# 入力データ/tsv形式
                            Num_gain = c(70,20,10,8),
                            # csv保存ディレクトリ
                            output_dir = "./csv/matrix",
+                           # 並列処理
+                           reduce_sum = FALSE,
                            # MCMCサンプリング
                            chains = 6,
                            parallel_chains = getOption("mc.cores", 24),
@@ -234,7 +236,14 @@ MF4Future.pred <- function(# 入力データ/tsv形式
     Num_gain = Num_gain/unlist(c(max_data.MF4)) # 日次での稼働台数増加予測数
   )
   # コンパイル
-  mod <- cmdstan_model("./stan/bsts-AR-tvc-rd-smo-pred-pois-periphe-mat_MF3parm.stan", cpp_options = list(stan_threads = TRUE))
+  if(reduce_sum == TRUE){
+    mod <- cmdstan_model("./stan/bsts-AR-tvc-rd-smo-pred-pois-periphe-mat_MF3parm.stan", cpp_options = list(stan_threads = TRUE))
+    print("MCMCサンプリング並列処理")
+  } else{
+    mod <- cmdstan_model("./stan/bsts-AR-tvc-smo-pred-pois-periphe-mat_MF3parm.stan")
+    print("MCMCサンプリング通常処理")
+  }
+  # 
   # マルチコア対応
   options(mc.cores = parallel::detectCores())
   # path
@@ -246,22 +255,39 @@ MF4Future.pred <- function(# 入力データ/tsv形式
   if(!dir.exists(output_dir)){
     dir.create(output_dir)}
   # MCMCサンプリング
+  print("MCMCサンプリング開始")
   exTime <- system.time(
-    fit <- mod$sample(data = data_list,
-                      seed = 1234,
-                      chains = chains,
-                      parallel_chains = parallel_chains,
-                      threads_per_chain = threads_per_chain,
-                      iter_warmup = iter_warmup,
-                      iter_sampling = iter_sampling,
-                      thin = thin,
-                      max_treedepth = max_treedepth,
-                      refresh = 100,
-                      init = 0, # エラー回避
-                      output_dir = output_dir, # csvデータ保存ディレクトリ
-                      output_basename = output_basename, # csvデータ保存名称
-                      show_messages = FALSE
-    )
+    if(reduce_sum == TRUE){
+      fit <- mod$sample(data = data_list,
+                        seed = 1234,
+                        chains = chains,
+                        parallel_chains = parallel_chains,
+                        threads_per_chain = threads_per_chain,
+                        iter_warmup = iter_warmup,
+                        iter_sampling = iter_sampling,
+                        thin = thin,
+                        max_treedepth = max_treedepth,
+                        refresh = 100,
+                        init = 0, # エラー回避
+                        output_dir = output_dir, # csvデータ保存ディレクトリ
+                        output_basename = output_basename, # csvデータ保存名称
+                        show_messages = FALSE
+      )
+    }else{
+      fit <- mod$sample(data = data_list,
+                        seed = 1234,
+                        chains = chains,
+                        iter_warmup = iter_warmup,
+                        iter_sampling = iter_sampling,
+                        thin = thin,
+                        max_treedepth = max_treedepth,
+                        refresh = 100,
+                        init = 0, # エラー回避
+                        output_dir = output_dir, # csvデータ保存ディレクトリ
+                        output_basename = output_basename, # csvデータ保存名称
+                        show_messages = FALSE
+      )
+    }
   )
   
   # 実行時間
