@@ -13,16 +13,18 @@ fit <- MF4Future.pred(
   Num_gain = c(70,20,10,8),
   # csv保存ディレクトリ
   output_dir = "./csv/matrix",
+  # 並列処理
+  reduce_sum = TRUE,
   # MCMCサンプリング
   chains = 6,
   parallel_chains = getOption("mc.cores", 24),
   threads_per_chain = 2,
-  iter_warmup = 2000, #6000,
-  iter_sampling = 2000, #2000,
+  iter_warmup = 1000, #6000,
+  iter_sampling = 1000, #2000,
   thin = 4,
-  max_treedepth = 12, #12
+  max_treedepth = 10, #12
   # タイトル
-  title = "Metis-MF4-Peripheral.MF3parm_tmp2",
+  title = "Metis-MF4-Peripheral.MF3parm_tmp3",
   # サンプリング時間保存
   save_exTime = TRUE,
   # サンプリング結果保存
@@ -31,5 +33,5 @@ fit <- MF4Future.pred(
   save_graph = TRUE)
 
 
-p <- readRDS("./rds/Metis-MF4-Peripheral.MF3parm_tmp2.EM件数_予測区間-29~120_[70,20,10,8].rds")
+p <- readRDS("./rds/Metis-MF4-Peripheral.MF3parm_tmp3.EM件数_予測区間-29~120_[70,20,10,8].rds")
 p
