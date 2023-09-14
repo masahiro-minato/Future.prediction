@@ -14,10 +14,10 @@ fit <- MF4Future.pred(
   # csv保存ディレクトリ
   output_dir = "./csv/matrix",
   # 並列処理
-  reduce_sum = TRUE,
+  reduce_sum = FALSE,
   # MCMCサンプリング
-  chains = 6,
-  parallel_chains = getOption("mc.cores", 24),
+  chains = 4,
+  parallel_chains = getOption("mc.cores", 10),
   threads_per_chain = 2,
   iter_warmup = 1000, #6000,
   iter_sampling = 1000, #2000,
