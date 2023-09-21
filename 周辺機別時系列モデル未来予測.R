@@ -1,8 +1,8 @@
 #### EM件数の基本構造時系列モデルでの推定 ####
 
 # ファイル読込
-MF3_maintenance <- read_tsv("./tsv_data/Metis_MF3_2211.tsv")　    # 保守データ
-MF3_machine <- read_tsv("./tsv_data/Metis_MIF_2211.tsv")          # 機器データ
+MF3_maintenance <- read_tsv("./tsv_data/Metis_MF3_2303.tsv")　    # 保守データ
+MF3_machine <- read_tsv("./tsv_data/Metis_MIF_2303.tsv")          # 機器データ
 
 # 周辺機名称
 MF3_maintenance %>% distinct(Peripheral_name) %>% dput()
@@ -53,7 +53,7 @@ MIF.count.MF3.Peripheral <-
   select(納品年月日, MIF.COOK, MIF.SINAI, MIF.VOLGA, MIF.AMUR, MIF.AMUR.HY)
 
 # 結合
-X.date.MF3 <- seq(as.POSIXct("2019-01-01"), as.POSIXct("2022-11-30"), by = "day")
+X.date.MF3 <- seq(as.POSIXct("2019-01-01"), as.POSIXct("2023-03-31"), by = "day")
 MIF.date.MF3.Peripheral <- tibble(X.date = X.date.MF3)
 MF3.MIF_by.date <- 
   MIF.date.MF3.Peripheral %>% 
@@ -65,7 +65,7 @@ MF3.MIF_by.date <-
 
 # データの準備
 start_day = which(MF3.MIF_by.date$X.date == "2019-02-01 JST")  # "2020-01-01 JST"
-end_day = which(MF3.MIF_by.date$X.date == "2022-11-30 JST")
+end_day = which(MF3.MIF_by.date$X.date == "2023-03-31 JST")
 pred_term = 30 # 予測期間
 data.num <- end_day - start_day + 1 + pred_term # 予測期間を含むデータ数
 # EM観測値のみをマトリクスへ変換
@@ -284,11 +284,11 @@ p <- ggplot(data = result_df, aes(x = time)) +
   theme(legend.position = "none") +
   theme(strip.background = element_blank(), strip.text = element_text(size = 16, hjust = 0)) +
   facet_wrap(~Peripheral, ncol = 1, labeller = labeller(Peripheral = Att.labs)) +
-  geom_vline(xintercept = as.POSIXct("2022-11-30 JST"), linetype = 2, color = "darkblue") + # 垂直線
+  geom_vline(xintercept = as.POSIXct("2023-03-31 JST"), linetype = 2, color = "darkblue") + # 垂直線
   scale_x_datetime(limits = limits, date_breaks = "1 month", date_labels = "%Y/%m") + # 表示期間の設定
   scale_y_continuous(breaks = breaks) +
   # 未来予測期間の文字表示
-  annotate("text", x = as.POSIXct("2022-11-30 JST"), y = Inf, 
+  annotate("text", x = as.POSIXct("2023-03-31 JST"), y = Inf, 
            hjust = -0.01, # 文字のｘ方向位置調整 マイナスで右へ移動
            vjust = 2, 　　# 文字のｙ方向位置調整 プラスで下へ移動
            label = "⇒ 【未来予測区間】", 
@@ -328,11 +328,11 @@ p.ADF <- ggplot(data = result_df.ADF, aes(x = time)) +
   theme(legend.position = "none") +
   theme(strip.background = element_blank(), strip.text = element_text(size = 16, hjust = 0)) +
   facet_wrap(~Peripheral, ncol = 1, labeller = labeller(Peripheral = Att.labs)) +
-  geom_vline(xintercept = as.POSIXct("2022-11-30 JST"), linetype = 2, color = "darkblue") + # 垂直線
+  geom_vline(xintercept = as.POSIXct("2023-03-31 JST"), linetype = 2, color = "darkblue") + # 垂直線
   scale_x_datetime(limits = limits, date_breaks = "1 month", date_labels = "%Y/%m") + # 表示期間の設定
   scale_y_continuous(breaks = breaks) +
   # 未来予測期間の文字表示
-  annotate("text", x = as.POSIXct("2022-11-30 JST"), y = Inf, 
+  annotate("text", x = as.POSIXct("2023-03-31 JST"), y = Inf, 
            hjust = -0.01, # 文字のｘ方向位置調整 マイナスで右へ移動
            vjust = 2, 　　# 文字のｙ方向位置調整 プラスで下へ移動
            label = "⇒ 【未来予測区間】", 
@@ -372,11 +372,11 @@ p.FIN <- ggplot(data = result_df.FIN, aes(x = time)) +
   theme(legend.position = "none") +
   theme(strip.background = element_blank(), strip.text = element_text(size = 16, hjust = 0)) +
   facet_wrap(~Peripheral, ncol = 1, labeller = labeller(Peripheral = Att.labs)) +
-  geom_vline(xintercept = as.POSIXct("2022-11-30 JST"), linetype = 2, color = "darkblue") + # 垂直線
+  geom_vline(xintercept = as.POSIXct("2023-03-31 JST"), linetype = 2, color = "darkblue") + # 垂直線
   scale_x_datetime(limits = limits, date_breaks = "1 month", date_labels = "%Y/%m") + # 表示期間の設定
   scale_y_continuous(breaks = breaks) +
   # 未来予測期間の文字表示
-  annotate("text", x = as.POSIXct("2022-11-30 JST"), y = Inf, 
+  annotate("text", x = as.POSIXct("2023-03-31 JST"), y = Inf, 
            hjust = -0.01, # 文字のｘ方向位置調整 マイナスで右へ移動
            vjust = 2, 　　# 文字のｙ方向位置調整 プラスで下へ移動
            label = "⇒ 【未来予測区間】", 
@@ -389,3 +389,4 @@ plot(p.FIN)
 n <- 3
 ggsave(str_c("./PDF/",title,".FIN_EM件数 予測区間-",start_day,"~",end_day,".pdf"), 
        plot = p.FIN, device = cairo_pdf, dpi=300, width=20, height=(n*5))
+
