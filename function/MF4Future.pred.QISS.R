@@ -187,7 +187,15 @@ MF4Future.pred.QISS <- function(
                 values_from = EM.count) %>% 
     mutate_all(~replace(., is.na(.), 0)) %>% 
     # 列名の変更
-    set_colnames(c("Maintenance_date", "EM.CATHERINE", "EM.COOK", "EM.AMUR", "EM.VOLGA中綴じ有", "EM.AMUR_HY", "EM.VOLGA中綴じ無")) %>%
+    rename(
+      EM.COOK = `COOK-D`,
+      EM.CATHERINE = CATHERINE,
+      EM.AMUR = `AMUR-D`,
+      EM.AMUR_HY = `AMUR-D HY`,
+      EM.VOLGA中綴じ有 = `VOLGA-H(中綴じ有)`,
+      EM.VOLGA中綴じ無 = `VOLGA-H(中綴じ無)`
+    ) %>%
+    # set_colnames(c("Maintenance_date", "EM.CATHERINE", "EM.COOK", "EM.AMUR", "EM.VOLGA中綴じ有", "EM.AMUR_HY", "EM.VOLGA中綴じ無")) %>%
     mutate(
       EM.VOLGA = EM.VOLGA中綴じ有 + EM.VOLGA中綴じ無,
       EM.AMUR = EM.AMUR + EM.AMUR_HY

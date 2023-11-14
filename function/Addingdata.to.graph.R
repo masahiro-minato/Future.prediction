@@ -1,7 +1,7 @@
 Addingdata.to.graph <- function(
     # QISSエクセルファイルの読込
     path.excel = "./excel", 　　　　　　 # ファイルのフォルダーパス
-    pattern1 = "〇共通_保守*.+\\.xlsx$", # 保守データ
+    pattern1 = "〇日次_保守*.+\\.xlsx$", # 保守データ
     pattern2 = "〇共通_周辺機装着情報*.+\\.csv$", # 周辺機装着情報
     # 実測値の開始日
     start_day.MF4.JST = "2023-06-01 JST",
@@ -148,7 +148,7 @@ Addingdata.to.graph <- function(
     ) %>% 
     ungroup()
   # 作業月の追加
-  MF4_maintenance <- 
+  MF4_maintenance <<- 
     Metis_MF4a %>% 
     mutate(
       Maintenance_month = as.Date(paste(str_sub(Maintenance_date, start=1, end=4),
@@ -157,13 +157,17 @@ Addingdata.to.graph <- function(
     ) %>% 
     distinct_all()
   
+  # 周辺機名称・処置部
+  # print(MF4_maintenance %>% distinct(Peripheral_name) %>% dput())
+  # print(MF4_maintenance %>% distinct(Treatment_location) %>% dput())
+  
   # 周辺機機種ごとの時系列でのEM件数の抽出
   EM.count.MF4.Peripheral <- 
     MF4_maintenance %>% 
     dplyr::filter((Peripheral_name %in% c("COOK-D", "CATHERINE") & 
                      Treatment_location %in% c("ADF部")) | 
                   (Peripheral_name %in% c("AMUR-D HY", "AMUR-D", "VOLGA-H(中綴じ有)", "VOLGA-H(中綴じ無)") & 
-                     Treatment_location %in% c("ﾊﾟﾝﾁ部","ﾌｨﾆｯｼｬｰ/ｿｰﾀｰ部"))) %>%
+                     Treatment_location %in% c("ﾊﾟﾝﾁ部","ﾌｨﾆｯｼｬｰ/ｿｰﾀｰ部","ｽﾃｰﾌﾟﾙ部"))) %>%
     group_by(Maintenance_date, Peripheral_name) %>%
     summarise(
       EM.count = n()
@@ -173,7 +177,17 @@ Addingdata.to.graph <- function(
                 values_from = EM.count) %>% 
     mutate_all(~replace(., is.na(.), 0)) %>% 
     # 列名の変更
-    set_colnames(c("Maintenance_date", "EM.CATHERINE", "EM.COOK", "EM.AMUR", "EM.VOLGA中綴じ有", "EM.AMUR_HY", "EM.VOLGA中綴じ無")) %>%
+    rename(
+      EM.COOK = `COOK-D`,
+      EM.CATHERINE = CATHERINE,
+      EM.AMUR = `AMUR-D`,
+      EM.AMUR_HY = `AMUR-D HY`,
+      EM.VOLGA中綴じ有 = `VOLGA-H(中綴じ有)`,
+      EM.VOLGA中綴じ無 = `VOLGA-H(中綴じ無)`
+    ) %>%
+    # 列順が異なる場合があり下記コードではNG
+    # set_colnames(c("Maintenance_date", "EM.COOK", "EM.VOLGA中綴じ有", "EM.AMUR", "EM.CATHERINE", "EM.AMUR_HY", "EM.VOLGA中綴じ無")) %>%
+    # set_colnames(c("Maintenance_date", "EM.CATHERINE", "EM.COOK", "EM.AMUR", "EM.VOLGA中綴じ有", "EM.AMUR_HY", "EM.VOLGA中綴じ無")) %>%
     mutate(
       EM.VOLGA = EM.VOLGA中綴じ有 + EM.VOLGA中綴じ無,
       EM.AMUR = EM.AMUR + EM.AMUR_HY
@@ -199,7 +213,7 @@ Addingdata.to.graph <- function(
     factor(MF4.EM_by.date$Peripheral, levels = Peripheral.MF4)
   
   # 未来予測区間の実測値データ
-  MF4.EM_by.date.Future <- 
+  MF4.EM_by.date.Future <<- 
     MF4.EM_by.date %>% 
     dplyr::filter(X.date >= start_day.MF4.JST)
   # ADFのみ抽出
