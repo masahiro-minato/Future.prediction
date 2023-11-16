@@ -81,8 +81,10 @@ MF4Future.pred.QISS <- function(
   # 周辺機機種ごとの時系列でのEM件数の抽出
   EM.count.MF3.Peripheral <- 
     MF3_maintenance %>% 
-    dplyr::filter((Peripheral_name %in% c("COOK-C", "SINAI-H") & Treatment_location %in% c("ADF部")) | 
-                    (Peripheral_name %in% c("AMUR-C(HY)", "AMUR-C中綴じ","VOLGA-E") & Treatment_location %in% c("ﾊﾟﾝﾁ部","ﾌｨﾆｯｼｬｰ/ｿｰﾀｰ部"))) %>%
+    dplyr::filter((Peripheral_name %in% c("COOK-C", "SINAI-H") & 
+                     Treatment_location %in% c("ADF部")) | 
+                  (Peripheral_name %in% c("AMUR-C(HY)", "AMUR-C中綴じ","VOLGA-E") & 
+                     Treatment_location %in% c("ﾊﾟﾝﾁ部","ﾌｨﾆｯｼｬｰ/ｿｰﾀｰ部","ｽﾃｰﾌﾟﾙ部"))) %>%
     group_by(Maintenance_date, Peripheral_name) %>%
     summarise(
       EM.count = n()
@@ -176,8 +178,10 @@ MF4Future.pred.QISS <- function(
   # 周辺機機種ごとの時系列でのEM件数の抽出
   EM.count.MF4.Peripheral <- 
     MF4_maintenance %>% 
-    dplyr::filter((Peripheral_name %in% c("COOK-D", "CATHERINE") & Treatment_location %in% c("ADF部")) | 
-                  (Peripheral_name %in% c("AMUR-D HY", "AMUR-D", "VOLGA-H(中綴じ有)", "VOLGA-H(中綴じ無)") & Treatment_location %in% c("ﾊﾟﾝﾁ部","ﾌｨﾆｯｼｬｰ/ｿｰﾀｰ部"))) %>%
+    dplyr::filter((Peripheral_name %in% c("COOK-D", "CATHERINE") & 
+                     Treatment_location %in% c("ADF部")) | 
+                  (Peripheral_name %in% c("AMUR-D HY", "AMUR-D", "VOLGA-H(中綴じ有)", "VOLGA-H(中綴じ無)") & 
+                     Treatment_location %in% c("ﾊﾟﾝﾁ部","ﾌｨﾆｯｼｬｰ/ｿｰﾀｰ部","ｽﾃｰﾌﾟﾙ部"))) %>%
     group_by(Maintenance_date, Peripheral_name) %>%
     summarise(
       EM.count = n()
