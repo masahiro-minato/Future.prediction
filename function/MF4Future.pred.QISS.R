@@ -30,7 +30,7 @@ MF4Future.pred.QISS <- function(
     max_treedepth = 12, #12
     refresh = 100,
     # タイトル/サンプリング結果・グラフ保存時の名称に使用
-    title = "Metis-MF4-Peripheral.MF3parm_tmp4",
+    title = "Metis-MF4",
     # サンプリング時間保存
     save_exTime = TRUE,
     # サンプリング結果保存
@@ -498,9 +498,8 @@ MF4Future.pred.QISS <- function(
     print("グラフ保存")
     n <- 4
     ggsave(str_c("./PDF/",title,".EM件数_予測区間-",start_day.MF4,"~",end_day.MF4,"_[",Num_gain_str,"].pdf"),
-           plot = p,
-           device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
-    saveRDS(p, file = str_c("./rds/",title,".EM件数_予測区間-",start_day.MF4,"~",end_day.MF4,"_[",Num_gain_str,"].rds"))
+           plot = p, device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
+    saveRDS(p, file = str_c("./rds/",title,".EM件数_予測区間.rds"))
   }
   
   # ADF
@@ -551,9 +550,8 @@ MF4Future.pred.QISS <- function(
     print("ADFフラフ保存")
     n <- 2
     ggsave(str_c("./PDF/",title,".ADF_EM件数_予測区間_",start_day.MF4,"~",end_day.MF4,"_[",Num_gain_str,"].pdf"),
-           plot = p.ADF,
-           device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
-    saveRDS(p.ADF, file = str_c("./rds/",title,".ADF_EM件数_予測区間-",start_day.MF4,"~",end_day.MF4,"_[",Num_gain_str,"].rds"))
+           plot = p.ADF, device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
+    saveRDS(p.ADF, file = str_c("./rds/",title,".ADF_EM件数_予測区間.rds"))
   }
   
   # FIN
@@ -604,9 +602,8 @@ MF4Future.pred.QISS <- function(
     print("FINグラフ保存")
     n <- 2
     ggsave(str_c("./PDF/",title,".FIN_EM件数_予測区間_",start_day.MF4,"~",end_day.MF4,"_[",Num_gain_str,"].pdf"),
-           plot = p.FIN,
-           device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
-    saveRDS(p.FIN, file = str_c("./rds/",title,".FIN_EM件数_予測区間-",start_day.MF4,"~",end_day.MF4,"_[",Num_gain_str,"].rds"))
+           plot = p.FIN, device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
+    saveRDS(p.FIN, file = str_c("./rds/",title,".FIN_EM件数_予測区間.rds"))
   }
   print(Sys.time(), quote=F)
   return(fit)
