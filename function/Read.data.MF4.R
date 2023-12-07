@@ -60,6 +60,7 @@ Read.data.MF4 <- function(
       ｵﾌﾟｼｮﾝ機種略号= as.logical(ｵﾌﾟｼｮﾝ機種略号),
       ｵﾌﾟｼｮﾝ機番= as.logical(ｵﾌﾟｼｮﾝ機番)
     )
+  
   # 機種略機番列の作成
   Metis_sheet1a <- 
     Metis_sheet1 %>% 
@@ -81,6 +82,18 @@ Read.data.MF4 <- function(
     dplyr::filter(EM == 1) %>% 
     distinct_all()
   
+  # 欠損行数の表示
+  print(paste0("年月度 欠損行 : ",count(dplyr::filter(Metis_MF4, is.na(年月度)))$n))
+  print(paste0("製造年月 欠損行 : ",count(dplyr::filter(Metis_MF4, is.na(製造年月)))$n))
+  print(paste0("納入日 欠損行 : ",count(dplyr::filter(Metis_MF4, is.na(納入日.x)))$n))
+  print(paste0("稼動月 欠損行 : ",count(dplyr::filter(Metis_MF4, is.na(稼動月)))$n))
+  print(paste0("保守実施日 欠損行 : ",count(dplyr::filter(Metis_MF4, is.na(保守実施日)))$n))
+  
+  # 欠損行削除
+  Metis_MF4 <- 
+    Metis_MF4 %>% 
+    drop_na(年月度,製造年月,納入日.x,稼動月,保守実施日)
+  
   # 日付へ変換
   Metis_MF4$年月度 <- 
     paste(str_sub(Metis_MF4$年月度, start=1, end=4),
@@ -88,14 +101,14 @@ Read.data.MF4 <- function(
           sep="-") %>% 
     as.POSIXct() %>% 
     as.Date(tz = "Asia/Tokyo")
-  
+
   Metis_MF4$製造年月 <- 
     paste(str_sub(Metis_MF4$製造年月, start=1, end=4),
           str_sub(Metis_MF4$製造年月, start=5, end=-1),("01"),
           sep="-") %>% 
     as.POSIXct() %>% 
     as.Date(tz = "Asia/Tokyo")
-  
+
   Metis_MF4$納入日.x <- 
     paste(str_sub(Metis_MF4$納入日.x, start=1, end=4),
           str_sub(Metis_MF4$納入日.x, start=5, end=6),
@@ -103,7 +116,7 @@ Read.data.MF4 <- function(
           sep="-") %>% 
     as.POSIXct() %>% 
     as.Date(tz = "Asia/Tokyo")
-  
+
   Metis_MF4$保守実施日 <- 
     paste(str_sub(Metis_MF4$保守実施日, start=1, end=4),
           str_sub(Metis_MF4$保守実施日, start=5, end=6),
@@ -111,7 +124,7 @@ Read.data.MF4 <- function(
           sep="-") %>% 
     as.POSIXct() %>% 
     as.Date(tz = "Asia/Tokyo")
-  
+
   # 列名変更
   print("列名変更")
   colnames(Metis_MF4)
