@@ -23,6 +23,7 @@ Read.data.MF4 <- function(
   print(files3)
   
   # ファイル読込
+  print("●共通ファイル読込...")
   Metis_master <- 
     read_excel("./excel/●共通_周辺機マスター.xlsx", sheet = 1, skip = 0)
   Metis_standard <- 
@@ -53,6 +54,7 @@ Read.data.MF4 <- function(
     distinct_all()
   
   # 初回訪問区分他のtype変更
+  print("初回訪問区分他のtype変更...")
   Metis_sheet1 <- 
     Metis_sheet1 %>% 
     mutate(
@@ -62,6 +64,7 @@ Read.data.MF4 <- function(
     )
   
   # 機種略機番列の作成
+  print("機種略機番列の作成...")
   Metis_sheet1a <- 
     Metis_sheet1 %>% 
     mutate(
@@ -75,6 +78,7 @@ Read.data.MF4 <- function(
   # print(names(Metis_sheet1a2join))
   
   # 列の選定
+  print("列の選定...")
   Metis_MF4 <- Metis_sheet1a2join %>% 
     select(機種略号.x,機種略機番,機種ｺｰﾄﾞ,訪問区分,
            年月度,製造年月,納入日.x,稼動月,保守実施日,
@@ -90,25 +94,27 @@ Read.data.MF4 <- function(
   print(paste0("保守実施日 欠損行 : ",count(dplyr::filter(Metis_MF4, is.na(保守実施日)))$n))
   
   # 欠損行削除
+  print("欠損行削除...")
   Metis_MF4 <- 
     Metis_MF4 %>% 
     drop_na(年月度,製造年月,納入日.x,稼動月,保守実施日)
   
   # 日付へ変換
+  print("年月度変換...")
   Metis_MF4$年月度 <- 
     paste(str_sub(Metis_MF4$年月度, start=1, end=4),
           str_sub(Metis_MF4$年月度, start=5, end=-1),("01"),
           sep="-") %>% 
     as.POSIXct() %>% 
     as.Date(tz = "Asia/Tokyo")
-
+  print("製造年月変換...")
   Metis_MF4$製造年月 <- 
     paste(str_sub(Metis_MF4$製造年月, start=1, end=4),
           str_sub(Metis_MF4$製造年月, start=5, end=-1),("01"),
           sep="-") %>% 
     as.POSIXct() %>% 
     as.Date(tz = "Asia/Tokyo")
-
+  print("納入月変換...")
   Metis_MF4$納入日.x <- 
     paste(str_sub(Metis_MF4$納入日.x, start=1, end=4),
           str_sub(Metis_MF4$納入日.x, start=5, end=6),
@@ -116,7 +122,7 @@ Read.data.MF4 <- function(
           sep="-") %>% 
     as.POSIXct() %>% 
     as.Date(tz = "Asia/Tokyo")
-
+　print("保守実施日変換...")
   Metis_MF4$保守実施日 <- 
     paste(str_sub(Metis_MF4$保守実施日, start=1, end=4),
           str_sub(Metis_MF4$保守実施日, start=5, end=6),
