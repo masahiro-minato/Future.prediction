@@ -3,6 +3,7 @@ Read.data.MF4 <- function(
     pattern1 = "〇共通_保守*.+\\.xlsx$",
     pattern2 = "〇共通_周辺機装着情報*.+\\.csv$",
     pattern3 = "〇共通_機器*.+\\.xlsx$",
+    EM = "Call",        # "EM" or "Call"
     save = TRUE,        # tsvファイル保存の有無
     path.tsv = "./tsv_data/", # tsv保存フォルダーパス
     tsv.name.EM = "Metis_MF4.tsv", # 保守EMデータのtsvファイル名
@@ -83,8 +84,15 @@ Read.data.MF4 <- function(
     select(機種略号.x,機種略機番,機種ｺｰﾄﾞ,訪問区分,
            年月度,製造年月,納入日.x,稼動月,保守実施日,
            CE作業時間,ｺｰﾙ,EM,現象,現象SC名称,処置場所,周辺機名) %>%
-    dplyr::filter(EM == 1) %>% 
+    # dplyr::filter(EM == 1) %>% 
     distinct_all()
+  # EMのみを選択する場合
+  if(EM == "EM"){
+    Metis_MF4 <- 
+      Metis_MF4 %>% 
+      dplyr::filter(EM == 1) %>% 
+      distinct_all()
+  }
   
   # 欠損行数の表示
   print(paste0("年月度 欠損行 : ",count(dplyr::filter(Metis_MF4, is.na(年月度)))$n))

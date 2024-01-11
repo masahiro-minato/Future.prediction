@@ -4,6 +4,7 @@ MF4Future.pred.QISS <- function(
     pattern1 = "〇共通_保守*.+\\.xlsx$", # 保守データ
     pattern2 = "〇共通_周辺機装着情報*.+\\.csv$", # 周辺機装着情報
     pattern3 = "〇共通_機器*.+\\.xlsx$", # 機器データ
+    EM = "Call",                         # "EM" or "Call"
     save = TRUE,        　　　　　　　　 # tsvファイル保存の有無
     path.tsv = "./tsv_data/", 　　　　　 # tsv保存フォルダーパス
     tsv.name.EM = "Metis_MF4.tsv", 　　　# 保守EMデータのtsvファイル名
@@ -59,6 +60,7 @@ MF4Future.pred.QISS <- function(
     pattern1 = pattern1,
     pattern2 = pattern2,
     pattern3 = pattern3,
+    EM = EM,
     save = save,
     path.tsv = path.tsv,
     tsv.name.EM = tsv.name.EM,
@@ -420,10 +422,10 @@ MF4Future.pred.QISS <- function(
   par(family="Noto Sans")
   # グラフタイトル
   if (parm == "lambda_exp") {
-    graph_title <- str_c("Metis-MF4 EM件数時系列分析 λ(μ + γ + tvf + r)：すべての成分を含んだ状態推定値")
+    graph_title <- str_c("Metis-MF4 ",EM,"件数時系列分析 λ(μ + γ + tvf + r)：すべての成分を含んだ状態推定値")
     fill.graph <- "lightblue"
   }else if (parm == "y_pred") {
-    graph_title <- str_c("Metis-MF4 EM件数時系列分析 95%予測区間（MF3のパラメータでの予測）")
+    graph_title <- str_c("Metis-MF4 ",EM,"件数時系列分析 95%予測区間（MF3のパラメータでの予測）")
     fill.graph <- "lightgreen"
   }
   # 縦軸名称
@@ -497,9 +499,10 @@ MF4Future.pred.QISS <- function(
   if(save_graph == TRUE){
     print("グラフ保存")
     n <- 4
-    ggsave(str_c("./PDF/",title,".EM件数_予測区間-",start_day.MF4,"~",end_day.MF4,"_[",Num_gain_str,"].pdf"),
+    # ggsave(str_c("./PDF/",title,".",EM,"件数_予測区間-",start_day.MF4,"~",end_day.MF4,"_[",Num_gain_str,"].pdf"),
+    ggsave(str_c("./PDF/",title,".",EM,"件数_予測区間.pdf"),
            plot = p, device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
-    saveRDS(p, file = str_c("./rds/",title,".EM件数_予測区間.rds"))
+    saveRDS(p, file = str_c("./rds/",title,".",EM,"件数_予測区間.rds"))
   }
   
   # ADF
@@ -549,9 +552,10 @@ MF4Future.pred.QISS <- function(
   if(save_graph.ADF == TRUE){
     print("ADFフラフ保存")
     n <- 2
-    ggsave(str_c("./PDF/",title,".ADF_EM件数_予測区間_",start_day.MF4,"~",end_day.MF4,"_[",Num_gain_str,"].pdf"),
+    # ggsave(str_c("./PDF/",title,".ADF_",EM,"件数_予測区間_",start_day.MF4,"~",end_day.MF4,"_[",Num_gain_str,"].pdf"),
+    ggsave(str_c("./PDF/",title,".ADF_",EM,"件数_予測区間.pdf"),
            plot = p.ADF, device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
-    saveRDS(p.ADF, file = str_c("./rds/",title,".ADF_EM件数_予測区間.rds"))
+    saveRDS(p.ADF, file = str_c("./rds/",title,".ADF_",EM,"件数_予測区間.rds"))
   }
   
   # FIN
@@ -601,9 +605,10 @@ MF4Future.pred.QISS <- function(
   if(save_graph.FIN == TRUE){
     print("FINグラフ保存")
     n <- 2
-    ggsave(str_c("./PDF/",title,".FIN_EM件数_予測区間_",start_day.MF4,"~",end_day.MF4,"_[",Num_gain_str,"].pdf"),
+    # ggsave(str_c("./PDF/",title,".FIN_",EM,"件数_予測区間_",start_day.MF4,"~",end_day.MF4,"_[",Num_gain_str,"].pdf"),
+    ggsave(str_c("./PDF/",title,".FIN_",EM,"件数_予測区間.pdf"),
            plot = p.FIN, device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
-    saveRDS(p.FIN, file = str_c("./rds/",title,".FIN_EM件数_予測区間.rds"))
+    saveRDS(p.FIN, file = str_c("./rds/",title,".FIN_",EM,"件数_予測区間.rds"))
   }
   print(Sys.time(), quote=F)
   return(fit)
