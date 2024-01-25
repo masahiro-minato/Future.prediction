@@ -55,6 +55,7 @@ MF4Future.pred.QISS <- function(
   # 開始時刻表示
   print(Sys.time(), quote=F)
   # QISSのエクセルデータ読込
+  source( "./function/Read.data.MF4.R",encoding = "utf8" ) # 本来は.Rprofileにて読み込まれるので不要だが...
   QISS <- Read.data.MF4(
     path.excel = path.excel,
     pattern1 = pattern1,
