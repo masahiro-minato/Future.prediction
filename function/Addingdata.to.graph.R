@@ -174,26 +174,86 @@ Addingdata.to.graph <- function(
     ) %>% 
     ungroup() %>% 
     pivot_wider(names_from = c(Peripheral_name),
-                values_from = EM.count) %>% 
-    mutate_all(~replace(., is.na(.), 0)) %>% 
-    # 列名の変更
-    rename(
-      EM.COOK = `COOK-D`,
-      EM.CATHERINE = CATHERINE,
-      EM.AMUR = `AMUR-D`,
-      EM.AMUR_HY = `AMUR-D HY`,
-      EM.VOLGA中綴じ有 = `VOLGA-H(中綴じ有)`,
-      EM.VOLGA中綴じ無 = `VOLGA-H(中綴じ無)`
-    ) %>%
-    # 列順が異なる場合があり下記コードではNG
-    # set_colnames(c("Maintenance_date", "EM.COOK", "EM.VOLGA中綴じ有", "EM.AMUR", "EM.CATHERINE", "EM.AMUR_HY", "EM.VOLGA中綴じ無")) %>%
-    # set_colnames(c("Maintenance_date", "EM.CATHERINE", "EM.COOK", "EM.AMUR", "EM.VOLGA中綴じ有", "EM.AMUR_HY", "EM.VOLGA中綴じ無")) %>%
-    mutate(
-      EM.VOLGA = EM.VOLGA中綴じ有 + EM.VOLGA中綴じ無,
-      EM.AMUR = EM.AMUR + EM.AMUR_HY
-    ) %>% 
-    # 不要列の削除
-    select("Maintenance_date", "EM.COOK", "EM.CATHERINE", "EM.VOLGA", "EM.AMUR")
+                values_from = EM.count)
+  
+  # 欠損列名の抽出
+  dfcolname <- names(EM.count.MF4.Peripheral) %>% dput 
+  allnames <- c("Maintenance_date", "COOK-D", "VOLGA-H(中綴じ有)", "AMUR-D", "CATHERINE", "AMUR-D HY", "VOLGA-H(中綴じ無)")
+  c <- !(allnames %in% dfcolname)
+  print(str_c("欠損列名：", allnames[c]))
+  # 欠損列名の有無判定条件ごとの処理
+  if(all(dfcolname == allnames)){
+    EM.count.MF4.Peripheral <- 
+      EM.count.MF4.Peripheral %>% 
+      # 列名の変更
+      rename(
+        EM.COOK = `COOK-D`,
+        EM.CATHERINE = CATHERINE,
+        EM.AMUR = `AMUR-D`,
+        EM.AMUR_HY = `AMUR-D HY`,
+        EM.VOLGA中綴じ有 = `VOLGA-H(中綴じ有)`,
+        EM.VOLGA中綴じ無 = `VOLGA-H(中綴じ無)`
+      ) %>%
+      # 列順が異なる場合があり下記コードではNG
+      # set_colnames(c("Maintenance_date", "EM.COOK", "EM.VOLGA中綴じ有", "EM.AMUR", "EM.CATHERINE", "EM.AMUR_HY", "EM.VOLGA中綴じ無")) %>%
+      # set_colnames(c("Maintenance_date", "EM.CATHERINE", "EM.COOK", "EM.AMUR", "EM.VOLGA中綴じ有", "EM.AMUR_HY", "EM.VOLGA中綴じ無")) %>%
+      mutate(
+        EM.VOLGA = EM.VOLGA中綴じ有 + EM.VOLGA中綴じ無,
+        EM.AMUR = EM.AMUR + EM.AMUR_HY
+      ) %>% 
+      # 不要列の削除
+      select("Maintenance_date", "EM.COOK", "EM.CATHERINE", "EM.VOLGA", "EM.AMUR") %>% 
+      mutate_all(~replace(., is.na(.), 0))
+  }else if(allnames[c] == "VOLGA-H(中綴じ無)"){
+    EM.count.MF4.Peripheral <- 
+      EM.count.MF4.Peripheral %>% 
+      # 列名の変更
+      rename(
+        EM.COOK = `COOK-D`,
+        EM.CATHERINE = CATHERINE,
+        EM.AMUR = `AMUR-D`,
+        EM.AMUR_HY = `AMUR-D HY`,
+        EM.VOLGA = `VOLGA-H(中綴じ有)`
+      ) %>%
+      mutate(
+        EM.AMUR = EM.AMUR + EM.AMUR_HY
+      ) %>% 
+      # 不要列の削除
+      select("Maintenance_date", "EM.COOK", "EM.CATHERINE", "EM.VOLGA", "EM.AMUR") %>% 
+      mutate_all(~replace(., is.na(.), 0))
+  }else if(allnames[c] == "AMUR-D HY"){
+    EM.count.MF4.Peripheral <- 
+      EM.count.MF4.Peripheral %>% 
+      # 列名の変更
+      rename(
+        EM.COOK = `COOK-D`,
+        EM.CATHERINE = CATHERINE,
+        EM.AMUR = `AMUR-D`,
+        EM.VOLGA中綴じ有 = `VOLGA-H(中綴じ有)`,
+        EM.VOLGA中綴じ無 = `VOLGA-H(中綴じ無)`
+      ) %>%
+      mutate(
+        EM.VOLGA = EM.VOLGA中綴じ有 + EM.VOLGA中綴じ無
+      ) %>% 
+      # 不要列の削除
+      select("Maintenance_date", "EM.COOK", "EM.CATHERINE", "EM.VOLGA", "EM.AMUR") %>% 
+      mutate_all(~replace(., is.na(.), 0))
+  }else if(all(allnames[c] == c("AMUR-D HY","VOLGA-H(中綴じ無)"))){
+    EM.count.MF4.Peripheral <- 
+      EM.count.MF4.Peripheral %>% 
+      # 列名の変更
+      rename(
+        EM.COOK = `COOK-D`,
+        EM.CATHERINE = CATHERINE,
+        EM.AMUR = `AMUR-D`,
+        EM.VOLGA = `VOLGA-H(中綴じ有)`
+      ) %>%
+      # 不要列の削除
+      select("Maintenance_date", "EM.COOK", "EM.CATHERINE", "EM.VOLGA", "EM.AMUR")
+  }else{
+    print("列名エラー")
+  }
+  
   # 周辺機名称ベクトルの作成
   Peripheral.MF4 <- substring(names(EM.count.MF4.Peripheral)[-1], 4,)
   # 結合
