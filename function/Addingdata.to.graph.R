@@ -177,12 +177,22 @@ Addingdata.to.graph <- function(
                 values_from = EM.count)
   
   # 欠損列名の抽出
-  dfcolname <- names(EM.count.MF4.Peripheral) %>% dput 
+  print("欠損列の抽出")
+  # dfcolname <- names(EM.count.MF4.Peripheral) %>% dput
+  dfcolname <- names(EM.count.MF4.Peripheral)
+  # dfcolname <-  c("Maintenance_date", "COOK-D", "VOLGA-H(中綴じ有)", "AMUR-D", "CATHERINE", "AMUR-D HY")
+  print(dfcolname)
   allnames <- c("Maintenance_date", "COOK-D", "VOLGA-H(中綴じ有)", "AMUR-D", "CATHERINE", "AMUR-D HY", "VOLGA-H(中綴じ無)")
   c <- !(allnames %in% dfcolname)
-  print(str_c("欠損列名：", allnames[c]))
+  if(all(dfcolname == allnames)){
+    print("欠損列なし")
+  }else{
+    print(str_c("欠損列名：", allnames[c]))
+  }
+  
   # 欠損列名の有無判定条件ごとの処理
   if(all(dfcolname == allnames)){
+    print(("列欠損なし"))
     EM.count.MF4.Peripheral <- 
       EM.count.MF4.Peripheral %>% 
       # 列名の変更
@@ -205,6 +215,7 @@ Addingdata.to.graph <- function(
       select("Maintenance_date", "EM.COOK", "EM.CATHERINE", "EM.VOLGA", "EM.AMUR") %>% 
       mutate_all(~replace(., is.na(.), 0))
   }else if(allnames[c] == "VOLGA-H(中綴じ無)"){
+    print("VOLGA-H(中綴じ無) 列欠損")
     EM.count.MF4.Peripheral <- 
       EM.count.MF4.Peripheral %>% 
       # 列名の変更
@@ -222,6 +233,7 @@ Addingdata.to.graph <- function(
       select("Maintenance_date", "EM.COOK", "EM.CATHERINE", "EM.VOLGA", "EM.AMUR") %>% 
       mutate_all(~replace(., is.na(.), 0))
   }else if(allnames[c] == "AMUR-D HY"){
+    print("AMUR-D HY 列欠損")
     EM.count.MF4.Peripheral <- 
       EM.count.MF4.Peripheral %>% 
       # 列名の変更
@@ -239,6 +251,7 @@ Addingdata.to.graph <- function(
       select("Maintenance_date", "EM.COOK", "EM.CATHERINE", "EM.VOLGA", "EM.AMUR") %>% 
       mutate_all(~replace(., is.na(.), 0))
   }else if(all(allnames[c] == c("AMUR-D HY","VOLGA-H(中綴じ無)"))){
+    print("AMUR-D HY,VOLGA-H(中綴じ無) 列欠損")
     EM.count.MF4.Peripheral <- 
       EM.count.MF4.Peripheral %>% 
       # 列名の変更
@@ -330,3 +343,4 @@ Addingdata.to.graph <- function(
   
   return(return.obje)
 }
+
