@@ -178,21 +178,20 @@ Addingdata.to.graph <- function(
   
   # 欠損列名の抽出
   print("欠損列の抽出")
-  # dfcolname <- names(EM.count.MF4.Peripheral) %>% dput
   dfcolname <- names(EM.count.MF4.Peripheral)
-  # dfcolname <-  c("Maintenance_date", "COOK-D", "VOLGA-H(中綴じ有)", "AMUR-D", "CATHERINE", "AMUR-D HY")
-  print(dfcolname)
-  allnames <- c("Maintenance_date", "COOK-D", "VOLGA-H(中綴じ有)", "AMUR-D", "CATHERINE", "AMUR-D HY", "VOLGA-H(中綴じ無)")
-  c <- !(allnames %in% dfcolname)
-  if(all(dfcolname == allnames)){
+  # dfcolname <- c("Maintenance_date", "CATHERINE", "COOK-D", "VOLGA-H(中綴じ無)", "AMUR-D", "AMUR-D HY", "VOLGA-H(中綴じ有)") #確認用
+  print(dfcolname) # データフレームから取得した列名表示
+  allnames <- c("Maintenance_date", "CATHERINE", "COOK-D", "AMUR-D", "AMUR-D HY", "VOLGA-H(中綴じ有)", "VOLGA-H(中綴じ無)") # 全列名
+  # 欠損列名表示/全ての列が存在するとsetdiff(allnames, dfcolname)がcharacter(0)となるため、character(0)かどうかの判定をする
+  if(identical(setdiff(allnames, dfcolname), character(0))){
     print("欠損列なし")
   }else{
-    print(str_c("欠損列名：", allnames[c]))
+    print(str_c("欠損列名：", setdiff(allnames, dfcolname)))
   }
   
   # 欠損列名の有無判定条件ごとの処理
-  if(all(dfcolname == allnames)){
-    print(("列欠損なし"))
+  if(identical(setdiff(allnames, dfcolname), character(0))){
+    print(("欠損列なし"))
     EM.count.MF4.Peripheral <- 
       EM.count.MF4.Peripheral %>% 
       # 列名の変更
@@ -214,7 +213,7 @@ Addingdata.to.graph <- function(
       # 不要列の削除
       select("Maintenance_date", "EM.COOK", "EM.CATHERINE", "EM.VOLGA", "EM.AMUR") %>% 
       mutate_all(~replace(., is.na(.), 0))
-  }else if(allnames[c] == "VOLGA-H(中綴じ無)"){
+  }else if(all(setdiff(allnames, dfcolname) == "VOLGA-H(中綴じ無)")){
     print("VOLGA-H(中綴じ無) 列欠損")
     EM.count.MF4.Peripheral <- 
       EM.count.MF4.Peripheral %>% 
@@ -232,7 +231,7 @@ Addingdata.to.graph <- function(
       # 不要列の削除
       select("Maintenance_date", "EM.COOK", "EM.CATHERINE", "EM.VOLGA", "EM.AMUR") %>% 
       mutate_all(~replace(., is.na(.), 0))
-  }else if(allnames[c] == "AMUR-D HY"){
+  }else if(all(setdiff(allnames, dfcolname) == "AMUR-D HY")){
     print("AMUR-D HY 列欠損")
     EM.count.MF4.Peripheral <- 
       EM.count.MF4.Peripheral %>% 
@@ -250,7 +249,7 @@ Addingdata.to.graph <- function(
       # 不要列の削除
       select("Maintenance_date", "EM.COOK", "EM.CATHERINE", "EM.VOLGA", "EM.AMUR") %>% 
       mutate_all(~replace(., is.na(.), 0))
-  }else if(all(allnames[c] == c("AMUR-D HY","VOLGA-H(中綴じ無)"))){
+  }else if(all(setdiff(allnames, dfcolname) == c("AMUR-D HY","VOLGA-H(中綴じ無)"))){
     print("AMUR-D HY,VOLGA-H(中綴じ無) 列欠損")
     EM.count.MF4.Peripheral <- 
       EM.count.MF4.Peripheral %>% 
