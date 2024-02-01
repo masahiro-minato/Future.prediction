@@ -174,7 +174,8 @@ Addingdata.to.graph <- function(
     ) %>% 
     ungroup() %>% 
     pivot_wider(names_from = c(Peripheral_name),
-                values_from = EM.count)
+                values_from = EM.count) %>% 
+    mutate_all(~replace(., is.na(.), 0))
   
   # 欠損列名の抽出
   print("欠損列の抽出")
@@ -200,14 +201,14 @@ Addingdata.to.graph <- function(
         EM.CATHERINE = CATHERINE,
         EM.AMUR = `AMUR-D`,
         EM.AMUR_HY = `AMUR-D HY`,
-        EM.VOLGA中綴じ有 = `VOLGA-H(中綴じ有)`,
-        EM.VOLGA中綴じ無 = `VOLGA-H(中綴じ無)`
+        EM.VOLGA_saddle_stitch = `VOLGA-H(中綴じ有)`,
+        EM.VOLGA_no_saddle_stitch = `VOLGA-H(中綴じ無)`
       ) %>%
       # 列順が異なる場合があり下記コードではNG
       # set_colnames(c("Maintenance_date", "EM.COOK", "EM.VOLGA中綴じ有", "EM.AMUR", "EM.CATHERINE", "EM.AMUR_HY", "EM.VOLGA中綴じ無")) %>%
       # set_colnames(c("Maintenance_date", "EM.CATHERINE", "EM.COOK", "EM.AMUR", "EM.VOLGA中綴じ有", "EM.AMUR_HY", "EM.VOLGA中綴じ無")) %>%
       mutate(
-        EM.VOLGA = EM.VOLGA中綴じ有 + EM.VOLGA中綴じ無,
+        EM.VOLGA = EM.VOLGA_saddle_stitch + EM.VOLGA_no_saddle_stitch,
         EM.AMUR = EM.AMUR + EM.AMUR_HY
       ) %>% 
       # 不要列の削除
@@ -240,11 +241,11 @@ Addingdata.to.graph <- function(
         EM.COOK = `COOK-D`,
         EM.CATHERINE = CATHERINE,
         EM.AMUR = `AMUR-D`,
-        EM.VOLGA中綴じ有 = `VOLGA-H(中綴じ有)`,
-        EM.VOLGA中綴じ無 = `VOLGA-H(中綴じ無)`
+        EM.VOLGA_saddle_stitch = `VOLGA-H(中綴じ有)`,
+        EM.VOLGA_no_saddle_stitch = `VOLGA-H(中綴じ無)`
       ) %>%
       mutate(
-        EM.VOLGA = EM.VOLGA中綴じ有 + EM.VOLGA中綴じ無
+        EM.VOLGA = EM.VOLGA_saddle_stitch + EM.VOLGA_no_saddle_stitch
       ) %>% 
       # 不要列の削除
       select("Maintenance_date", "EM.COOK", "EM.CATHERINE", "EM.VOLGA", "EM.AMUR") %>% 
@@ -265,6 +266,16 @@ Addingdata.to.graph <- function(
   }else{
     print("列名エラー")
   }
+  
+  # 合計件数
+  EM.count.MF4.Peripheral.toal <- 
+    colSums(EM.count.MF4.Peripheral %>% 
+              select(-Maintenance_date))
+  print("実測値合計件数")
+  print(EM.count.MF4.Peripheral.toal)
+  date.start <- min(EM.count.MF4.Peripheral$Maintenance_date)
+  date.end <- max(EM.count.MF4.Peripheral$Maintenance_date)
+  print(str_c("開始日:",date.start," ～ 終了日:",date.end))
   
   # 周辺機名称ベクトルの作成
   Peripheral.MF4 <- substring(names(EM.count.MF4.Peripheral)[-1], 4,)
