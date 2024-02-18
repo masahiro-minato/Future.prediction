@@ -7,10 +7,14 @@ Addingdata.to.graph <- function(
     start_day.MF4.JST = "2023-06-01 JST",
     # MF4初ロット製造開始月
     manuf.start.month = "2022/12/01",
+    # 未来予測区間グラフデータの読込有無
+    load_graph = TRUE,
+    load_graph.ADF = FALSE,
+    load_graph.FIN = FALSE,
     # 未来予測区間グラフデータ名称/拡張子は不要
-    graph.name = "Metis-MF4-Peripheral.MF3parm_tmp2.EM件数_予測区間-29~120_[70,20,10,8]",
-    graph.name.ADF = "Metis-MF4-Peripheral.MF3parm_tmp2.ADF_EM件数_予測区間-29~120_[70,20,10,8]",
-    graph.name.FIN = "Metis-MF4-Peripheral.MF3parm_tmp2.FIN_EM件数_予測区間-29~120_[70,20,10,8]"
+    graph.name = "Metis-MF4.EM件数_予測区間",
+    graph.name.ADF = "Metis-MF4.ADF_EM件数_予測区間",
+    graph.name.FIN = "Metis-MF4.FIN_EM件数_予測区間"
 ){
   # EM件数未来予測区間グラフへの実測値をプロットする関数
   # 戻り値：グラフデータのリスト（"ALL","ADF","FIN"）
@@ -307,49 +311,58 @@ Addingdata.to.graph <- function(
   MF4.EM_by.date.Future.FIN <- 
     MF4.EM_by.date.Future %>% 
     dplyr::filter(Peripheral %in% c("VOLGA","AMUR"))
-  
-  # グラフデータの読込
-  print("グラフデータ読込・・・")
-  p <- readRDS(str_c("./rds/",graph.name,".rds"))
-  p.ADF <- readRDS(str_c("./rds/",graph.name.ADF,".rds"))
-  p.FIN <- readRDS(str_c("./rds/",graph.name.FIN,".rds"))
-  
   # フォント定義
   par(family="Noto Sans")
-  # 未来予測区間への実測値プロット
-  p.actualresults <- 
-    p + geom_point(alpha = 1.0, size = 3.0,
-                   data = MF4.EM_by.date.Future, 
-                   mapping =  aes(x = X.date, y = EM.num, color = Peripheral), shape = 18)
   
-  p.ADF.actualresults <- 
-    p.ADF + geom_point(alpha = 1.0, size = 3.0,
-                       data = MF4.EM_by.date.Future.ADF, 
-                       mapping =  aes(x = X.date, y = EM.num, color = Peripheral), shape = 18)
-  
-  p.FIN.actualresults <- 
-    p.FIN + geom_point(alpha = 1.0, size = 3.0,
-                       data = MF4.EM_by.date.Future.FIN, 
-                       mapping =  aes(x = X.date, y = EM.num, color = Peripheral), shape = 18)
-  
-  # グラフ保存
-  n <- 4
-  ggsave(str_c("./PDF/",graph.name,"＆計測値.pdf"),
-         plot = p.actualresults, device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
-  n <- 2
-  ggsave(str_c("./PDF/",graph.name.ADF,"＆計測値.pdf"),
-         plot = p.ADF.actualresults, device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
-  n <- 2
-  ggsave(str_c("./PDF/",graph.name.FIN,"＆計測値.pdf"),
-         plot = p.FIN.actualresults, device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
-  
-  # リスト作成
-  print("リスト作成")
-  return.obje <- append(return.obje, list(p.actualresults))
-  return.obje <- append(return.obje, list(p.ADF.actualresults))
-  return.obje <- append(return.obje, list(p.FIN.actualresults))
-  index <- length(return.obje)
-  names(return.obje)[c(1,3)] <- c("ALL","ADF","FIN")
+  # 全体
+  if(load_graph == TRUE){
+    # グラフデータの読込
+    print("ALL グラフデータ読込・・・")
+    p <- readRDS(str_c("./rds/",graph.name,".rds"))
+    # 未来予測区間への実測値プロット
+    p.actualresults <- 
+      p + geom_point(alpha = 1.0, size = 3.0,
+                     data = MF4.EM_by.date.Future, 
+                     mapping =  aes(x = X.date, y = EM.num, color = Peripheral), shape = 18)
+    # グラフ保存
+    n <- 4
+    ggsave(str_c("./PDF/",graph.name,"＆計測値.pdf"),
+           plot = p.actualresults, device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
+    # リスト作成
+    return.obje <- append(return.obje, list(p.actualresults))
+    index <- length(return.obje)
+    names(return.obje)[c(index)] <- c("ALL")
+  }
+  # ADF
+  if(load_graph.ADF == TRUE){
+    print("ADF グラフデータ読込・・・")
+    p.ADF <- readRDS(str_c("./rds/",graph.name.ADF,".rds"))
+    p.ADF.actualresults <- 
+      p.ADF + geom_point(alpha = 1.0, size = 3.0,
+                         data = MF4.EM_by.date.Future.ADF, 
+                         mapping =  aes(x = X.date, y = EM.num, color = Peripheral), shape = 18)
+    n <- 2
+    ggsave(str_c("./PDF/",graph.name.ADF,"＆計測値.pdf"),
+           plot = p.ADF.actualresults, device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
+    return.obje <- append(return.obje, list(p.ADF.actualresults))
+    index <- length(return.obje)
+    names(return.obje)[c(index)] <- c("ADF")
+  }
+  # FIN
+  if(load_graph.FIN == TRUE){
+    print("FIN グラフデータ読込・・・")
+    p.FIN <- readRDS(str_c("./rds/",graph.name.FIN,".rds"))
+    p.FIN.actualresults <- 
+      p.FIN + geom_point(alpha = 1.0, size = 3.0,
+                         data = MF4.EM_by.date.Future.FIN, 
+                         mapping =  aes(x = X.date, y = EM.num, color = Peripheral), shape = 18)
+    n <- 2
+    ggsave(str_c("./PDF/",graph.name.FIN,"＆計測値.pdf"),
+           plot = p.FIN.actualresults, device = cairo_pdf, dpi=300, width=10, height=(n*2.5))
+    return.obje <- append(return.obje, list(p.FIN.actualresults))
+    index <- length(return.obje)
+    names(return.obje)[c(index)] <- c("FIN")
+  }
   
   return(return.obje)
 }
